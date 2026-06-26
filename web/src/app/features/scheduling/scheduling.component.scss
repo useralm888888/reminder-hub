@@ -1,0 +1,55 @@
+@use '../../../styles/bem/mixins' as bem;
+
+@include bem.block(scheduling) {
+  max-width: 42rem;
+
+  @include bem.element(card) {
+    padding: 1.5rem;
+  }
+
+  @include bem.element(form) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  @include bem.element(field) {
+    width: 100%;
+
+    @include bem.modifier(date) {
+      flex: 1;
+    }
+
+    @include bem.modifier(time) {
+      flex: 0 0 9.5rem;
+    }
+  }
+
+  @include bem.element(datetime) {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  @include bem.element(submit) {
+    margin-top: 0.85rem;
+  }
+
+  @include bem.element(field-icon) {
+    color: var(--app-text-muted);
+  }
+
+  @media (max-width: 600px) {
+    @include bem.element(datetime) {
+      flex-direction: column;
+    }
+
+    @include bem.element(field) {
+      @include bem.modifier(time) {
+        flex: 1;
+        width: 100%;
+      }
+    }
+
+  }
+}

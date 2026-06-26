@@ -1,0 +1,134 @@
+<section class="reminder-list">
+  @if (loadError()) {
+    <div class="reminder-list__alert" role="alert">
+      {{ loadError() }}
+    </div>
+  }
+
+  <div class="reminder-list__stats">
+    <article class="app-stat-card">
+      <p class="app-stat-card__label">Total reminders</p>
+      <p class="app-stat-card__value">{{ totalCount() }}</p>
+      <p class="app-stat-card__hint">All statuses</p>
+    </article>
+
+    <article class="app-stat-card app-stat-card--scheduled">
+      <p class="app-stat-card__label">Scheduled</p>
+      <p class="app-stat-card__value">{{ scheduledCount() }}</p>
+      <p class="app-stat-card__hint">Waiting to send</p>
+    </article>
+
+    <article class="app-stat-card app-stat-card--sent">
+      <p class="app-stat-card__label">Sent</p>
+      <p class="app-stat-card__value">{{ sentCount() }}</p>
+      <p class="app-stat-card__hint">Delivered</p>
+    </article>
+  </div>
+
+  <div class="app-card reminder-list__card">
+    <div class="reminder-list__header-row">
+      <h2 class="reminder-list__section-title">All reminders</h2>
+      <p class="reminder-list__page-info">
+        Page {{ currentPage() }} of {{ totalPages() }} · {{ pageSize() }} per page
+      </p>
+    </div>
+
+    @if (isLoading()) {
+      <p class="reminder-list__empty">Loading reminders...</p>
+    } @else if (reminders().length === 0) {
+      <p class="reminder-list__empty">No reminders scheduled yet.</p>
+    } @else {
+      <div class="reminder-list__table-wrap">
+        <table class="reminder-list__table">
+          <thead>
+            <tr>
+              <th>Message</th>
+              <th>Scheduled at</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (reminder of reminders(); track reminder.id) {
+              <tr>
+                <td class="reminder-list__message">{{ reminder.message }}</td>
+                <td>
+                  <span class="reminder-list__datetime">
+                    <mat-icon class="reminder-list__meta-icon" fontIcon="event" />
+                    {{ reminder.scheduledAt | date: 'MMM d, y, h:mm a' }}
+                  </span>
+                </td>
+                <td>
+                  @if (reminder.email) {
+                    <span class="reminder-list__email">
+                      <mat-icon class="reminder-list__meta-icon" fontIcon="mail" />
+                      {{ reminder.email }}
+                    </span>
+                  } @else {
+                    <span class="reminder-list__dash">—</span>
+                  }
+                </td>
+                <td>
+                  @if (reminder.status === 'sent') {
+                    <span class="app-badge app-badge--sent">
+                      <mat-icon class="reminder-list__badge-icon" fontIcon="check_circle" />
+                      Sent
+                    </span>
+                  } @else {
+                    <span class="app-badge app-badge--scheduled">
+                      <mat-icon class="reminder-list__badge-icon" fontIcon="schedule" />
+                      Scheduled
+                    </span>
+                  }
+                </td>
+                <td>
+                  <div class="reminder-list__actions">
+                    <button
+                      class="reminder-list__action-btn"
+                      type="button"
+                      [disabled]="!canEdit(reminder)"
+                      (click)="openEditDialog(reminder)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      class="reminder-list__action-btn reminder-list__action-btn--danger"
+                      type="button"
+                      [disabled]="!canEdit(reminder) || deletingId() === reminder.id"
+                      (click)="deleteReminder(reminder)"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="reminder-list__pagination">
+        <button
+          class="app-btn reminder-list__page-btn"
+          type="button"
+          [disabled]="currentPage() <= 1"
+          (click)="goToPreviousPage()"
+        >
+          Previous
+        </button>
+        <span class="reminder-list__page-label">
+          Showing page {{ currentPage() }} of {{ totalPages() }}
+        </span>
+        <button
+          class="app-btn reminder-list__page-btn"
+          type="button"
+          [disabled]="currentPage() >= totalPages()"
+          (click)="goToNextPage()"
+        >
+          Next
+        </button>
+      </div>
+    }
+  </div>
+</section>

@@ -1,0 +1,187 @@
+@use '../../../styles/bem/mixins' as bem;
+
+@include bem.block(shell) {
+  height: 100vh;
+  background: var(--app-content-bg);
+
+  @include bem.element(sidenav) {
+    width: 15.5rem;
+    border-right: 1px solid var(--app-sidebar-border);
+    background: var(--app-sidebar-bg);
+    color: var(--app-sidebar-text);
+  }
+
+  @include bem.element(sidebar) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    height: 100%;
+  }
+
+  @include bem.element(sidebar-top) {
+    padding: 1.25rem 1rem 1rem;
+    border-bottom: 1px solid var(--app-sidebar-border);
+  }
+
+  @include bem.element(logo) {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 7.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: var(--app-radius);
+    background: rgba(255, 255, 255, 0.04);
+    line-height: 1.1;
+  }
+
+  @include bem.element(logo-main) {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+  }
+
+  @include bem.element(logo-sub) {
+    margin-top: 0.15rem;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    color: var(--app-sidebar-muted);
+  }
+
+  @include bem.element(user) {
+    margin: 0.85rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--app-sidebar-muted);
+
+    strong {
+      color: #fff;
+      font-weight: 600;
+    }
+  }
+
+  @include bem.element(nav) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1rem 0.75rem;
+    flex: 1;
+  }
+
+  @include bem.element(nav-link) {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.85rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.07);
+    color: #d1d5db;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.11);
+      color: #fff;
+    }
+
+    @include bem.modifier(active) {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+
+      .shell__nav-label {
+        font-weight: 600;
+      }
+    }
+  }
+
+  @include bem.element(nav-icon) {
+    width: 1.125rem;
+    height: 1.125rem;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+    color: inherit;
+  }
+
+  @include bem.element(nav-label) {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: inherit;
+  }
+
+  @include bem.element(footer) {
+    margin-top: auto;
+    padding: 0.75rem;
+    border-top: 1px solid var(--app-sidebar-border);
+  }
+
+  @include bem.element(logout) {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.85rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.07);
+    color: #d1d5db;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.11);
+      color: #fff;
+    }
+  }
+
+  @include bem.element(logout-icon) {
+    width: 1.125rem;
+    height: 1.125rem;
+    font-size: 1.125rem;
+  }
+
+  @include bem.element(content) {
+    display: flex;
+    flex-direction: column;
+    background: var(--app-content-bg);
+  }
+
+  @include bem.element(page-header) {
+    padding: 1.75rem 2rem 0.5rem;
+  }
+
+  @include bem.element(page-title) {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--app-text);
+  }
+
+  @include bem.element(page-subtitle) {
+    margin: 0.4rem 0 0;
+    font-size: 0.9375rem;
+    color: var(--app-text-muted);
+  }
+
+  @include bem.element(main) {
+    flex: 1;
+    padding: 1rem 2rem 2rem;
+    overflow: auto;
+  }
+}

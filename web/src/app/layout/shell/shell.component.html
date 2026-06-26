@@ -1,0 +1,53 @@
+<mat-sidenav-container class="shell">
+  <mat-sidenav class="shell__sidenav" mode="side" opened>
+    <div class="shell__sidebar">
+      <div class="shell__sidebar-top">
+        <div class="shell__logo" aria-label="Reminder Hub">
+          <span class="shell__logo-main">REMINDER</span>
+          <span class="shell__logo-sub">HUB</span>
+        </div>
+
+        @if (currentUsername(); as username) {
+          <p class="shell__user">Logged in as <strong>{{ username }}</strong></p>
+        }
+      </div>
+
+      <nav class="shell__nav">
+        @for (item of navItems; track item.route) {
+          <a
+            class="shell__nav-link"
+            [routerLink]="item.route"
+            routerLinkActive="shell__nav-link--active"
+          >
+            <mat-icon
+              class="shell__nav-icon"
+              fontSet="material-icons-outlined"
+              [fontIcon]="item.icon"
+            />
+            <span class="shell__nav-label">{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+
+      <div class="shell__footer">
+        <button class="shell__logout" type="button" (click)="logout()">
+          <mat-icon class="shell__logout-icon" fontSet="material-icons-outlined" fontIcon="logout" />
+          Logout
+        </button>
+      </div>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="shell__content">
+    <header class="shell__page-header">
+      <div class="shell__page-heading">
+        <h1 class="shell__page-title">{{ activePage().title }}</h1>
+        <p class="shell__page-subtitle">{{ activePage().subtitle }}</p>
+      </div>
+    </header>
+
+    <main class="shell__main">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

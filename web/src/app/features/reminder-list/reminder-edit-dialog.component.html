@@ -1,0 +1,45 @@
+<h2 mat-dialog-title>Edit reminder</h2>
+
+<mat-dialog-content class="reminder-edit-dialog__content">
+  @if (errorMessage(); as message) {
+    <div class="reminder-edit-dialog__alert" role="alert">{{ message }}</div>
+  }
+
+  <form class="reminder-edit-dialog__form" [formGroup]="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Message</mat-label>
+      <textarea matInput rows="3" formControlName="message"></textarea>
+    </mat-form-field>
+
+    <div class="reminder-edit-dialog__datetime">
+      <mat-form-field appearance="outline">
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="date" />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Time</mat-label>
+        <input matInput type="time" formControlName="time" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Email (optional)</mat-label>
+      <input matInput type="email" formControlName="email" />
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="reminder-edit-dialog__actions">
+  <button class="app-btn reminder-edit-dialog__btn" type="button" (click)="close()">Cancel</button>
+  <button
+    class="app-btn reminder-edit-dialog__btn"
+    type="button"
+    [disabled]="submitting()"
+    (click)="save()"
+  >
+    {{ submitting() ? 'Saving...' : 'Save changes' }}
+  </button>
+</mat-dialog-actions>

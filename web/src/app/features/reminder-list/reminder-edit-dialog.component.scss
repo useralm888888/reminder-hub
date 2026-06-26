@@ -1,0 +1,39 @@
+@use '../../../styles/bem/mixins' as bem;
+
+@include bem.block(reminder-edit-dialog) {
+  @include bem.element(content) {
+    min-width: min(100vw - 2rem, 28rem);
+    padding-top: 0.5rem;
+  }
+
+  @include bem.element(form) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  @include bem.element(datetime) {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  @include bem.element(alert) {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #fca5a5;
+    border-radius: 4px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 0.875rem;
+  }
+
+  @include bem.element(actions) {
+    gap: 0.5rem;
+    padding-inline: 1.5rem 1.5rem;
+  }
+
+  @include bem.element(btn) {
+    min-width: 7rem;
+    width: auto;
+  }
+}

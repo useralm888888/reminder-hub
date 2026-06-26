@@ -1,0 +1,46 @@
+<section class="scheduling">
+  <div class="app-card scheduling__card">
+    <form class="scheduling__form" [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field class="scheduling__field" appearance="outline">
+        <mat-label>Message</mat-label>
+        <textarea
+          matInput
+          rows="3"
+          formControlName="message"
+          placeholder="e.g. Check API gateway logs"
+        ></textarea>
+        @if (form.controls.message.hasError('required') && form.controls.message.touched) {
+          <mat-error>Message is required.</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="scheduling__datetime">
+        <mat-form-field class="scheduling__field scheduling__field--date" appearance="outline">
+          <mat-label>Date</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="date" />
+          <mat-datepicker-toggle matIconSuffix [for]="picker" />
+          <mat-datepicker #picker />
+        </mat-form-field>
+
+        <mat-form-field class="scheduling__field scheduling__field--time" appearance="outline">
+          <mat-label>Time</mat-label>
+          <input matInput type="time" formControlName="time" />
+          <mat-icon class="scheduling__field-icon" matIconSuffix>schedule</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field class="scheduling__field" appearance="outline">
+        <mat-label>Email (optional)</mat-label>
+        <input matInput type="email" formControlName="email" placeholder="test@example.com" />
+        <mat-icon class="scheduling__field-icon" matIconSuffix>mail</mat-icon>
+        @if (form.controls.email.hasError('email') && form.controls.email.touched) {
+          <mat-error>Enter a valid email address.</mat-error>
+        }
+      </mat-form-field>
+
+      <button class="scheduling__submit app-btn" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Creating...' : 'Create reminder' }}
+      </button>
+    </form>
+  </div>
+</section>

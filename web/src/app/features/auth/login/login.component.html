@@ -1,0 +1,52 @@
+<section class="login">
+  <div class="login__card">
+    <div class="login__brand">
+      <span class="login__brand-main">REMINDER</span>
+      <span class="login__brand-sub">HUB</span>
+    </div>
+
+    <h1 class="login__title">Login</h1>
+
+    @if (errorMessage(); as message) {
+      <div class="login__alert" role="alert">{{ message }}</div>
+    }
+
+    <form class="login__form" [formGroup]="form" (ngSubmit)="submit()">
+      <label class="login__field">
+        <span class="login__label">Username</span>
+        <input
+          class="login__input"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          placeholder="admin"
+        />
+      </label>
+
+      <label class="login__field">
+        <span class="login__label">Password</span>
+        <div class="login__password-wrap">
+          <input
+            class="login__input login__input--password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="admin"
+          />
+          <button
+            class="login__toggle"
+            type="button"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            (click)="togglePasswordVisibility()"
+          >
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+      </label>
+
+      <button class="login__submit app-btn" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Signing in...' : 'Sign In' }}
+      </button>
+    </form>
+  </div>
+</section>
