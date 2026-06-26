@@ -1,5 +1,9 @@
 [build]
 builder = "RAILPACK"
+buildCommand = "npm run build:railway"
 
 [deploy]
+startCommand = "caddy run --config /Caddyfile --adapter caddyfile"
+healthcheckPath = "/"
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
