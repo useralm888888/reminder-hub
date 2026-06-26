@@ -18,8 +18,8 @@ services:
 
   api:
     build:
-      context: ..
-      dockerfile: api/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: reminder-api
     ports:
       - "8080:8080"

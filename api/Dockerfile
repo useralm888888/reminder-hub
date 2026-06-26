@@ -1,12 +1,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY api/Api.csproj api/
-RUN dotnet restore api/Api.csproj
+COPY Api.csproj .
+COPY nuget.config .
+RUN dotnet restore Api.csproj
 
-COPY api/ api/
-WORKDIR /src/api
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+COPY . .
+RUN dotnet publish Api.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
