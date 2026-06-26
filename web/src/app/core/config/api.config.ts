@@ -1,4 +1,6 @@
-import { InjectionToken } from '@angular/core';
+import { inject, InjectionToken } from '@angular/core';
+
+import { AppConfigService } from './app-config.service';
 
 export interface ApiConfig {
   baseUrl: string;
@@ -6,7 +8,10 @@ export interface ApiConfig {
 
 export const API_CONFIG = new InjectionToken<ApiConfig>('API_CONFIG', {
   providedIn: 'root',
-  factory: () => ({
-    baseUrl: 'http://localhost:5169',
-  }),
+  factory: () => {
+    const appConfig = inject(AppConfigService);
+    return {
+      baseUrl: appConfig.apiBaseUrl,
+    };
+  },
 });
