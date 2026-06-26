@@ -1,7 +1,6 @@
 [build]
-builder = "RAILPACK"
-buildCommand = "npm run build:railway"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "caddy run --config /Caddyfile --adapter caddyfile"
 restartPolicyType = "ON_FAILURE"
