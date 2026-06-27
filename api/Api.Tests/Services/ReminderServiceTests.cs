@@ -16,6 +16,7 @@ public class ReminderServiceTests
     private readonly Mock<IReminderRepository> _repository = new();
     private readonly Mock<IReminderDeliveryService> _deliveryService = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<IReminderNotifier> _notifier = new();
     private readonly ReminderService _sut;
 
     public ReminderServiceTests()
@@ -24,7 +25,7 @@ public class ReminderServiceTests
             _repository.Object,
             _deliveryService.Object,
             _unitOfWork.Object,
-            Mock.Of<IReminderNotifier>(),
+            _notifier.Object,
             Mock.Of<ILogger<ReminderService>>());
     }
 
@@ -76,12 +77,76 @@ public class ReminderServiceTests
     }
 
     [Fact]
-    public async Task DeleteAsync_WhenReminderNotFound_ThrowsReminderNotFoundException()
+    public async Task CreateAsync_PersistsReminderAndReturnsResponse()
+    {
+        Reminder? captured = null;
+        _repository
+            .Setup(r => r.AddAsync(It.IsAny<Reminder>(), It.IsAny<CancellationToken>()))
+            .Callback<Reminder, CancellationToken>((reminder, _) => captured = reminder)
+            .Returns(Task.CompletedTask);
+
+        var sendAt = DateTimeOffset.UtcNow.AddHours(2);
+        var request = new CreateReminderRequest("  Check logs  ", sendAt, "  user@example.com  ");
+
+        var response = await _sut.CreateAsync(request);
+
+        response.Status.Should().Be(ReminderStatus.Scheduled);
+        response.SendAt.Should().Be(sendAt.ToUniversalTime());
+        captured.Should().NotBeNull();
+        captured!.Message.Should().Be("Check logs");
+        captured.Email.Should().Be("user@example.com");
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessDueRemindersAsync_WhenAlreadyMarkedSent_DoesNotNotify()
+    {
+        var reminder = CreateReminder();
+        reminder.SendAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+
+        _repository
+            .Setup(r => r.GetDueRemindersAsync(It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Reminder> { reminder });
+
+        _repository
+            .Setup(r => r.TryMarkAsSentAsync(reminder.Id, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        await _sut.ProcessDueRemindersAsync();
+
+        _notifier.Verify(
+            n => n.NotifyStatusChangedAsync(It.IsAny<Guid>(), It.IsAny<ReminderStatus>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessDueRemindersAsync_WhenMarkedSent_NotifiesClients()
+    {
+        var reminder = CreateReminder();
+        reminder.SendAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+
+        _repository
+            .Setup(r => r.GetDueRemindersAsync(It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Reminder> { reminder });
+
+        _repository
+            .Setup(r => r.TryMarkAsSentAsync(reminder.Id, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await _sut.ProcessDueRemindersAsync();
+
+        _notifier.Verify(
+            n => n.NotifyStatusChangedAsync(reminder.Id, ReminderStatus.Sent, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenReminderMissing_ThrowsReminderNotFoundException()
     {
         var id = Guid.NewGuid();
         _repository
-            .Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Reminder?)null);
+            .Setup(r => r.DeleteAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
 
         var act = () => _sut.DeleteAsync(id);
 
@@ -92,9 +157,6 @@ public class ReminderServiceTests
     public async Task DeleteAsync_WhenReminderIsScheduled_DeletesReminder()
     {
         var reminder = CreateReminder();
-        _repository
-            .Setup(r => r.GetByIdAsync(reminder.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reminder);
 
         _repository
             .Setup(r => r.DeleteAsync(reminder.Id, It.IsAny<CancellationToken>()))
@@ -103,15 +165,13 @@ public class ReminderServiceTests
         await _sut.DeleteAsync(reminder.Id);
 
         _repository.Verify(r => r.DeleteAsync(reminder.Id, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task DeleteAsync_WhenReminderAlreadySent_DeletesReminder()
     {
         var reminder = CreateReminder(status: ReminderStatus.Sent);
-        _repository
-            .Setup(r => r.GetByIdAsync(reminder.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reminder);
 
         _repository
             .Setup(r => r.DeleteAsync(reminder.Id, It.IsAny<CancellationToken>()))
@@ -147,7 +207,7 @@ public class ReminderServiceTests
             .ReturnsAsync(new List<Reminder> { reminder });
 
         _repository
-            .Setup(r => r.MarkAsSentAsync(reminder.Id, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.TryMarkAsSentAsync(reminder.Id, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         await _sut.ProcessDueRemindersAsync();
@@ -157,7 +217,7 @@ public class ReminderServiceTests
             Times.Once);
 
         _repository.Verify(
-            r => r.MarkAsSentAsync(reminder.Id, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
+            r => r.TryMarkAsSentAsync(reminder.Id, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -178,7 +238,7 @@ public class ReminderServiceTests
         await _sut.ProcessDueRemindersAsync();
 
         _repository.Verify(
-            r => r.MarkAsSentAsync(It.IsAny<Guid>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
+            r => r.TryMarkAsSentAsync(It.IsAny<Guid>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

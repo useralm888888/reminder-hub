@@ -3,8 +3,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Api.Data;
+using Api.Domain.Enums;
 using Api.Dtos;
+using Api.Services;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Api.IntegrationTests;
 
@@ -57,6 +61,48 @@ public class RemindersEndpointsTests : IClassFixture<ReminderApiFactory>
     }
 
     [Fact]
+    public async Task UpdateReminder_WhenNotFound_ReturnsNotFound()
+    {
+        using var client = CreateAuthorizedClient();
+
+        var updateRequest = new UpdateReminderRequest(
+            "Updated message",
+            DateTimeOffset.UtcNow.AddHours(2),
+            null);
+
+        var response = await client.PutAsJsonAsync($"/reminders/{Guid.NewGuid()}", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteReminder_WhenNotFound_ReturnsNotFound()
+    {
+        using var client = CreateAuthorizedClient();
+
+        var response = await client.DeleteAsync($"/reminders/{Guid.NewGuid()}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task UpdateReminder_WhenAlreadySent_ReturnsConflict()
+    {
+        var created = await CreateReminderAsync("Already sent");
+        await MarkReminderAsSentAsync(created.Id);
+
+        using var client = CreateAuthorizedClient();
+        var updateRequest = new UpdateReminderRequest(
+            "Should fail",
+            DateTimeOffset.UtcNow.AddHours(2),
+            null);
+
+        var response = await client.PutAsJsonAsync($"/reminders/{created.Id}", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task UpdateAndDeleteReminder_WithToken_Succeeds()
     {
         var created = await CreateReminderAsync("Mutable reminder");
@@ -104,5 +150,21 @@ public class RemindersEndpointsTests : IClassFixture<ReminderApiFactory>
 
         var created = await response.Content.ReadFromJsonAsync<CreateReminderResponse>(JsonOptions);
         return created!;
+    }
+
+    private async Task MarkReminderAsSentAsync(Guid reminderId)
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entity = await db.Reminders.FindAsync(reminderId);
+        entity.Should().NotBeNull();
+        entity!.SendAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+        await db.SaveChangesAsync();
+
+        var reminderService = scope.ServiceProvider.GetRequiredService<IReminderService>();
+        await reminderService.ProcessDueRemindersAsync();
+
+        var refreshed = await db.Reminders.FindAsync(reminderId);
+        refreshed!.Status.Should().Be(ReminderStatus.Sent);
     }
 }

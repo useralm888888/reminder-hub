@@ -101,16 +101,10 @@ public class ReminderService(
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var reminder = await reminderRepository.GetByIdAsync(id, cancellationToken);
-        if (reminder is null)
-        {
-            throw new ReminderNotFoundException(id);
-        }
-
         var deleted = await reminderRepository.DeleteAsync(id, cancellationToken);
         if (!deleted)
         {
-            throw new ReminderNotEditableException(id);
+            throw new ReminderNotFoundException(id);
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -139,23 +133,30 @@ public class ReminderService(
             {
                 await deliveryService.DeliverAsync(reminder, cancellationToken);
 
-                var marked = await reminderRepository.MarkAsSentAsync(
+                var marked = await reminderRepository.TryMarkAsSentAsync(
                     reminder.Id,
                     DateTimeOffset.UtcNow,
                     cancellationToken);
 
-                if (marked)
+                if (!marked)
                 {
-                    logger.LogInformation(
-                        "Reminder {ReminderId} marked as sent at {SentAt}",
-                        reminder.Id,
-                        DateTimeOffset.UtcNow);
-
-                    await reminderNotifier.NotifyStatusChangedAsync(
-                        reminder.Id,
-                        ReminderStatus.Sent,
-                        cancellationToken);
+                    logger.LogWarning(
+                        "Reminder {ReminderId} was already marked sent by another worker.",
+                        reminder.Id);
+                    continue;
                 }
+
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                logger.LogInformation(
+                    "Reminder {ReminderId} marked as sent at {SentAt}",
+                    reminder.Id,
+                    DateTimeOffset.UtcNow);
+
+                await reminderNotifier.NotifyStatusChangedAsync(
+                    reminder.Id,
+                    ReminderStatus.Sent,
+                    cancellationToken);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

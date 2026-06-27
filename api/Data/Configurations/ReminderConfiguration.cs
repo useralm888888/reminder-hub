@@ -31,6 +31,10 @@ public class ReminderConfiguration : IEntityTypeConfiguration<Reminder>
         builder.Property(r => r.CreatedAt)
             .IsRequired();
 
+        builder.Property(r => r.Version)
+            .IsConcurrencyToken()
+            .HasDefaultValue(0);
+
         builder.HasIndex(r => new { r.Status, r.SendAt });
     }
 }

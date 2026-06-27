@@ -7,8 +7,6 @@ public interface IReminderRepository
 {
     Task<Reminder?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<Reminder>> GetAllAsync(CancellationToken cancellationToken = default);
-
     Task<(IReadOnlyList<Reminder> Items, int TotalCount)> GetPagedAsync(
         int page,
         int pageSize,
@@ -27,7 +25,7 @@ public interface IReminderRepository
 
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<bool> MarkAsSentAsync(
+    Task<bool> TryMarkAsSentAsync(
         Guid id,
         DateTimeOffset sentAt,
         CancellationToken cancellationToken = default);

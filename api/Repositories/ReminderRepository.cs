@@ -13,14 +13,6 @@ public class ReminderRepository(AppDbContext context) : IReminderRepository
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Reminder>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        return await context.Reminders
-            .AsNoTracking()
-            .OrderBy(r => r.SendAt)
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<(IReadOnlyList<Reminder> Items, int TotalCount)> GetPagedAsync(
         int page,
         int pageSize,
@@ -79,6 +71,7 @@ public class ReminderRepository(AppDbContext context) : IReminderRepository
         existing.Message = reminder.Message;
         existing.SendAt = reminder.SendAt;
         existing.Email = reminder.Email;
+        existing.Version++;
 
         return true;
     }
@@ -98,11 +91,25 @@ public class ReminderRepository(AppDbContext context) : IReminderRepository
         return true;
     }
 
-    public async Task<bool> MarkAsSentAsync(
+    public async Task<bool> TryMarkAsSentAsync(
         Guid id,
         DateTimeOffset sentAt,
         CancellationToken cancellationToken = default)
     {
+        if (context.Database.IsRelational())
+        {
+            var rowsAffected = await context.Reminders
+                .Where(r => r.Id == id && r.Status == ReminderStatus.Scheduled)
+                .ExecuteUpdateAsync(
+                    setters => setters
+                        .SetProperty(r => r.Status, ReminderStatus.Sent)
+                        .SetProperty(r => r.SentAt, sentAt)
+                        .SetProperty(r => r.Version, r => r.Version + 1),
+                    cancellationToken);
+
+            return rowsAffected > 0;
+        }
+
         var reminder = await context.Reminders
             .FirstOrDefaultAsync(
                 r => r.Id == id && r.Status == ReminderStatus.Scheduled,
@@ -115,7 +122,7 @@ public class ReminderRepository(AppDbContext context) : IReminderRepository
 
         reminder.Status = ReminderStatus.Sent;
         reminder.SentAt = sentAt;
-        await context.SaveChangesAsync(cancellationToken);
+        reminder.Version++;
 
         return true;
     }

@@ -17,4 +17,6 @@ public class Reminder
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? SentAt { get; set; }
+
+    public int Version { get; set; }
 }

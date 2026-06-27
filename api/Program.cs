@@ -1,10 +1,8 @@
+using Api.ExceptionHandling;
 using Api.Extensions;
 using Api.Hubs;
 using Api.Options;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,8 +23,10 @@ builder.Services.AddCors(options =>
         if (corsOrigins.Length > 0)
         {
             policyBuilder.WithOrigins(corsOrigins).AllowCredentials();
+            return;
         }
-        else
+
+        if (builder.Environment.IsDevelopment())
         {
             policyBuilder.SetIsOriginAllowed(_ => true).AllowCredentials();
         }
@@ -87,15 +87,15 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseSwagger();
-app.UseSwaggerUI(options =>
-{
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Reminder API v1");
-    options.RoutePrefix = "swagger";
-});
-
 if (app.Environment.IsDevelopment())
 {
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Reminder API v1");
+        options.RoutePrefix = "swagger";
+    });
+
     app.UseHttpsRedirection();
 }
 
@@ -151,31 +151,6 @@ static string[] GetCorsOrigins(IConfiguration configuration)
     }
 
     return configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-}
-
-internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
-{
-    public async ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext,
-        Exception exception,
-        CancellationToken cancellationToken)
-    {
-        logger.LogError(exception, "Unhandled exception occurred");
-
-        var problemDetails = new ProblemDetails
-        {
-            Status = StatusCodes.Status500InternalServerError,
-            Title = "An unexpected error occurred.",
-            Detail = httpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment()
-                ? exception.Message
-                : null
-        };
-
-        httpContext.Response.StatusCode = problemDetails.Status.Value;
-        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
-
-        return true;
-    }
 }
 
 public partial class Program { }

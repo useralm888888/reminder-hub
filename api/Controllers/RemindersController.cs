@@ -1,6 +1,5 @@
 using Api.Authentication;
 using Api.Dtos;
-using Api.Exceptions;
 using Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -52,19 +51,8 @@ public class RemindersController(IReminderService reminderService) : ControllerB
         [FromBody] UpdateReminderRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var reminder = await reminderService.UpdateAsync(id, request, cancellationToken);
-            return Ok(reminder);
-        }
-        catch (ReminderNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ReminderNotEditableException ex)
-        {
-            return Conflict(new ProblemDetails { Title = ex.Message });
-        }
+        var reminder = await reminderService.UpdateAsync(id, request, cancellationToken);
+        return Ok(reminder);
     }
 
     // Remove a reminder (scheduled or sent).
@@ -72,21 +60,9 @@ public class RemindersController(IReminderService reminderService) : ControllerB
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            await reminderService.DeleteAsync(id, cancellationToken);
-            return NoContent();
-        }
-        catch (ReminderNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ReminderNotEditableException ex)
-        {
-            return Conflict(new ProblemDetails { Title = ex.Message });
-        }
+        await reminderService.DeleteAsync(id, cancellationToken);
+        return NoContent();
     }
 }
