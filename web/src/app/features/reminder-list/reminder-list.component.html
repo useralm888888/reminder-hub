@@ -95,7 +95,7 @@
                     <button
                       class="reminder-list__action-btn reminder-list__action-btn--danger"
                       type="button"
-                      [disabled]="!canEdit(reminder) || deletingId() === reminder.id"
+                      [disabled]="deletingId() === reminder.id"
                       (click)="deleteReminder(reminder)"
                     >
                       Delete
