@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Api.Domain.Entities;
 using Api.Options;
@@ -13,6 +14,12 @@ public class BrevoApiEmailSender(
     ILogger<BrevoApiEmailSender> logger) : IReminderEmailSender
 {
     public const string HttpClientName = "Brevo";
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
 
     private readonly BrevoOptions _options = options.Value;
 
@@ -40,7 +47,7 @@ public class BrevoApiEmailSender(
         var client = httpClientFactory.CreateClient(HttpClientName);
         using var request = new HttpRequestMessage(HttpMethod.Post, "v3/smtp/email")
         {
-            Content = JsonContent.Create(payload),
+            Content = JsonContent.Create(payload, options: JsonOptions),
         };
         request.Headers.Add("api-key", _options.ApiKey);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -63,7 +70,7 @@ public class BrevoApiEmailSender(
         BrevoSender Sender,
         IReadOnlyList<BrevoRecipient> To,
         string Subject,
-        [property: JsonPropertyName("textContent")] string TextContent);
+        string TextContent);
 
     private sealed record BrevoSender(string Email, string Name);
 

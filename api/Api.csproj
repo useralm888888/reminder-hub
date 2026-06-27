@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Api.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Api.Tests/**" />
     <Compile Remove="Api.IntegrationTests/**" />
     <Content Remove="Api.Tests/**" />

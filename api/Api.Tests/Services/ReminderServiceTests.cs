@@ -106,6 +106,23 @@ public class ReminderServiceTests
     }
 
     [Fact]
+    public async Task DeleteAsync_WhenReminderAlreadySent_DeletesReminder()
+    {
+        var reminder = CreateReminder(status: ReminderStatus.Sent);
+        _repository
+            .Setup(r => r.GetByIdAsync(reminder.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(reminder);
+
+        _repository
+            .Setup(r => r.DeleteAsync(reminder.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await _sut.DeleteAsync(reminder.Id);
+
+        _repository.Verify(r => r.DeleteAsync(reminder.Id, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task ProcessDueRemindersAsync_WhenNoDueReminders_DoesNotDeliver()
     {
         _repository

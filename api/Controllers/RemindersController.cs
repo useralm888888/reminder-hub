@@ -67,7 +67,7 @@ public class RemindersController(IReminderService reminderService) : ControllerB
         }
     }
 
-    // Remove a scheduled reminder. Same rule — only while it's still Scheduled.
+    // Remove a reminder (scheduled or sent).
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

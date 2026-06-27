@@ -107,11 +107,6 @@ public class ReminderService(
             throw new ReminderNotFoundException(id);
         }
 
-        if (reminder.Status != ReminderStatus.Scheduled)
-        {
-            throw new ReminderNotEditableException(id);
-        }
-
         var deleted = await reminderRepository.DeleteAsync(id, cancellationToken);
         if (!deleted)
         {

@@ -86,9 +86,7 @@ public class ReminderRepository(AppDbContext context) : IReminderRepository
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var existing = await context.Reminders
-            .FirstOrDefaultAsync(
-                r => r.Id == id && r.Status == ReminderStatus.Scheduled,
-                cancellationToken);
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
         if (existing is null)
         {

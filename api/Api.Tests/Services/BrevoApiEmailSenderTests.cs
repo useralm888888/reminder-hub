@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Api.Domain.Entities;
 using Api.Domain.Enums;
 using Api.Options;
@@ -26,6 +27,12 @@ public class BrevoApiEmailSenderTests
         handler.RequestCount.Should().Be(1);
         handler.LastRequest!.RequestUri!.AbsolutePath.Should().Be("/v3/smtp/email");
         handler.LastRequest.Headers.GetValues("api-key").Single().Should().Be("test-api-key");
+
+        var body = await handler.LastRequest!.Content!.ReadAsStringAsync();
+        using var json = JsonDocument.Parse(body);
+        json.RootElement.TryGetProperty("sender", out _).Should().BeTrue();
+        json.RootElement.TryGetProperty("textContent", out _).Should().BeTrue();
+        json.RootElement.GetProperty("sender").GetProperty("email").GetString().Should().Be("sender@example.com");
     }
 
     [Fact]
