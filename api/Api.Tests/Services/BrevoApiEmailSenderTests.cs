@@ -16,20 +16,25 @@ public class BrevoApiEmailSenderTests
     [Fact]
     public async Task SendAsync_WhenApiReturnsSuccess_CompletesWithoutError()
     {
-        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Created));
+        string? capturedBody = null;
+        var handler = new StubHttpMessageHandler(async request =>
+        {
+            capturedBody = request.Content is null
+                ? null
+                : await request.Content.ReadAsStringAsync();
+            return new HttpResponseMessage(HttpStatusCode.Created);
+        });
         var sender = CreateSender(handler);
 
         var reminder = CreateReminder("user@example.com");
 
-        var act = () => sender.SendAsync(reminder);
+        await sender.SendAsync(reminder);
 
-        await act.Should().NotThrowAsync();
         handler.RequestCount.Should().Be(1);
         handler.LastRequest!.RequestUri!.AbsolutePath.Should().Be("/v3/smtp/email");
         handler.LastRequest.Headers.GetValues("api-key").Single().Should().Be("test-api-key");
 
-        var body = await handler.LastRequest!.Content!.ReadAsStringAsync();
-        using var json = JsonDocument.Parse(body);
+        using var json = JsonDocument.Parse(capturedBody!);
         json.RootElement.TryGetProperty("sender", out _).Should().BeTrue();
         json.RootElement.TryGetProperty("textContent", out _).Should().BeTrue();
         json.RootElement.GetProperty("sender").GetProperty("email").GetString().Should().Be("sender@example.com");
@@ -39,10 +44,10 @@ public class BrevoApiEmailSenderTests
     public async Task SendAsync_WhenApiReturnsError_Throws()
     {
         var handler = new StubHttpMessageHandler(_ =>
-            new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized)
             {
                 Content = new StringContent("{\"message\":\"Invalid API key\"}"),
-            });
+            }));
         var sender = CreateSender(handler);
 
         var reminder = CreateReminder("user@example.com");
@@ -56,7 +61,8 @@ public class BrevoApiEmailSenderTests
     [Fact]
     public async Task SendAsync_WhenNotConfigured_DoesNotCallApi()
     {
-        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Created));
+        var handler = new StubHttpMessageHandler(_ =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Created)));
         var sender = new BrevoApiEmailSender(
             new StubHttpClientFactory(handler),
             Microsoft.Extensions.Options.Options.Create(new BrevoOptions { Enabled = false, ApiKey = "", SenderEmail = "sender@example.com" }),
@@ -106,19 +112,19 @@ public class BrevoApiEmailSenderTests
     }
 
     private sealed class StubHttpMessageHandler(
-        Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
+        Func<HttpRequestMessage, Task<HttpResponseMessage>> responder) : HttpMessageHandler
     {
         public int RequestCount { get; private set; }
 
         public HttpRequestMessage? LastRequest { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(
+        protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             RequestCount++;
             LastRequest = request;
-            return Task.FromResult(responder(request));
+            return await responder(request);
         }
     }
 }
