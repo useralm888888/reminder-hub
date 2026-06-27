@@ -2,20 +2,18 @@ namespace Api.Options;
 
 internal static class BrevoConfigurationNormalizer
 {
-    public static void Apply(BrevoSmtpOptions options, IConfiguration configuration)
+    public static void Apply(BrevoOptions options, IConfiguration configuration)
     {
-        options.Login = Trim(options.Login);
-        options.Password = Trim(options.Password);
+        options.ApiKey = Trim(options.ApiKey);
         options.SenderEmail = Trim(options.SenderEmail);
         options.SenderName = Trim(options.SenderName);
-        options.SmtpHost = Trim(options.SmtpHost);
 
-        if (string.IsNullOrWhiteSpace(options.SmtpHost))
+        if (string.IsNullOrWhiteSpace(options.SenderName))
         {
-            options.SmtpHost = "smtp-relay.brevo.com";
+            options.SenderName = "Reminder Hub";
         }
 
-        var enabledRaw = Trim(configuration[$"{BrevoSmtpOptions.SectionName}:Enabled"]);
+        var enabledRaw = Trim(configuration[$"{BrevoOptions.SectionName}:Enabled"]);
         if (!string.IsNullOrWhiteSpace(enabledRaw))
         {
             options.Enabled = enabledRaw.Equals("true", StringComparison.OrdinalIgnoreCase)

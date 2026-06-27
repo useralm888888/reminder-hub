@@ -111,7 +111,7 @@ app.Run();
 
 static void LogBrevoConfiguration(WebApplication app)
 {
-    var brevo = app.Services.GetRequiredService<IOptions<BrevoSmtpOptions>>().Value;
+    var brevo = app.Services.GetRequiredService<IOptions<BrevoOptions>>().Value;
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
     if (!brevo.Enabled)
@@ -124,17 +124,14 @@ static void LogBrevoConfiguration(WebApplication app)
     if (!brevo.IsConfigured)
     {
         logger.LogWarning(
-            "Brevo is enabled but incomplete. Login set={HasLogin}, Password set={HasPassword}, SenderEmail set={HasSenderEmail}",
-            !string.IsNullOrWhiteSpace(brevo.Login),
-            !string.IsNullOrWhiteSpace(brevo.Password),
+            "Brevo is enabled but incomplete. ApiKey set={HasApiKey}, SenderEmail set={HasSenderEmail}",
+            !string.IsNullOrWhiteSpace(brevo.ApiKey),
             !string.IsNullOrWhiteSpace(brevo.SenderEmail));
         return;
     }
 
     logger.LogInformation(
-        "Brevo email delivery active. SMTP={Host}:{Port}, Sender={SenderEmail}",
-        brevo.SmtpHost,
-        brevo.SmtpPort,
+        "Brevo email delivery active via HTTP API. Sender={SenderEmail}",
         brevo.SenderEmail);
 }
 

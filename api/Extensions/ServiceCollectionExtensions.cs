@@ -30,8 +30,8 @@ public static class ServiceCollectionExtensions
             configuration.GetSection(ReminderProcessorOptions.SectionName));
         services.Configure<ReminderDeliveryOptions>(
             configuration.GetSection(ReminderDeliveryOptions.SectionName));
-        services.AddOptions<BrevoSmtpOptions>()
-            .Bind(configuration.GetSection(BrevoSmtpOptions.SectionName))
+        services.AddOptions<BrevoOptions>()
+            .Bind(configuration.GetSection(BrevoOptions.SectionName))
             .PostConfigure(options => BrevoConfigurationNormalizer.Apply(options, configuration));
         services.Configure<ApiAuthOptions>(
             configuration.GetSection(ApiAuthOptions.SectionName));
@@ -52,10 +52,15 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IReminderNotifier, SignalRReminderNotifier>();
 
         services.AddSingleton<FileReminderDeliveryService>();
-        services.AddSingleton<IReminderEmailSender, BrevoSmtpEmailSender>();
+        services.AddHttpClient(BrevoApiEmailSender.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri("https://api.brevo.com/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddSingleton<IReminderEmailSender, BrevoApiEmailSender>();
         services.AddSingleton<IReminderDeliveryService>(sp =>
         {
-            var brevoOptions = sp.GetRequiredService<IOptions<BrevoSmtpOptions>>().Value;
+            var brevoOptions = sp.GetRequiredService<IOptions<BrevoOptions>>().Value;
             var fileDelivery = sp.GetRequiredService<FileReminderDeliveryService>();
 
             if (!brevoOptions.IsConfigured)

@@ -47,7 +47,7 @@ Controller → Service → Repository → EF Core → PostgreSQL (reminders tabl
                          ↑
               Background worker (15s poll)
                          ↓
-              File log (+ optional Brevo SMTP)
+              File log (+ optional Brevo HTTP API)
                          ↓
               SignalR push → Angular list refresh
 ```
@@ -69,7 +69,9 @@ Important settings (env vars use `__` instead of `:`):
 | `ReminderDelivery__LogFilePath` | default `logs/reminders.log` |
 | `ApiAuth__ScheduleToken` | Bearer token for all `/reminders` endpoints + SignalR hub |
 | `Brevo__Enabled` | `false` by default |
-| `Brevo__Login`, `Brevo__Password`, `Brevo__SenderEmail` | SMTP credentials |
+| `Brevo__ApiKey` | Brevo API key (`xkeysib-...`) from Settings → SMTP & API → API keys |
+| `Brevo__SenderEmail` | Verified sender address |
+| `Brevo__SenderName` | Optional display name (default `Reminder Hub`) |
 
 Full defaults are in `appsettings.json`.
 
@@ -78,15 +80,16 @@ Full defaults are in `appsettings.json`.
 The assignment doesn't require real email. If you want it anyway:
 
 1. Verify a sender in Brevo
-2. Create an SMTP key (not your account password)
+2. Create an **API key** (not the SMTP key) under Settings → SMTP & API → API keys
 3. Set via user secrets locally:
 
 ```bash
 dotnet user-secrets set "Brevo:Enabled" "true"
-dotnet user-secrets set "Brevo:Login" "your-login@smtp-brevo.com"
-dotnet user-secrets set "Brevo:Password" "your-smtp-key"
+dotnet user-secrets set "Brevo:ApiKey" "xkeysib-your-api-key"
 dotnet user-secrets set "Brevo:SenderEmail" "your-verified@email.com"
 ```
+
+Email is sent via `POST https://api.brevo.com/v3/smtp/email` (HTTPS). This works on Railway Hobby — outbound SMTP port 587 is blocked there.
 
 ## Migrations
 
