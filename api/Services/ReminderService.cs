@@ -11,6 +11,7 @@ public class ReminderService(
     IReminderRepository reminderRepository,
     IReminderDeliveryService deliveryService,
     IUnitOfWork unitOfWork,
+    IReminderNotifier reminderNotifier,
     ILogger<ReminderService> logger) : IReminderService
 {
     public const int DefaultPageSize = 50;
@@ -154,6 +155,11 @@ public class ReminderService(
                         "Reminder {ReminderId} marked as sent at {SentAt}",
                         reminder.Id,
                         DateTimeOffset.UtcNow);
+
+                    await reminderNotifier.NotifyStatusChangedAsync(
+                        reminder.Id,
+                        ReminderStatus.Sent,
+                        cancellationToken);
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)

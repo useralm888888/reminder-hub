@@ -34,21 +34,29 @@ curl -X POST http://localhost:5169/reminders \
   -d '{"message":"Check API gateway logs","sendAt":"2026-06-27T14:30:00Z","email":"test@example.com"}'
 ```
 
-**GET /reminders** — list (paginated: `?page=1&pageSize=20`)
+**GET /reminders** — list (paginated: `?page=1&pageSize=20`, needs Bearer token)
 
 Also: `PUT /reminders/{id}`, `DELETE /reminders/{id}`, `POST /auth/login` for the Angular UI.
+
+**SignalR** — `GET /hubs/reminders` (WebSocket). Event `ReminderStatusChanged` with `{ id, status }` when a reminder is marked sent. Same Bearer token as REST (header or `access_token` query param for the WS upgrade).
 
 ## Structure
 
 ```
-Controller → Service → Repository → EF Core → PostgreSQL
+Controller → Service → Repository → EF Core → PostgreSQL (reminders table)
                          ↑
               Background worker (15s poll)
                          ↓
               File log (+ optional Brevo SMTP)
+                         ↓
+              SignalR push → Angular list refresh
 ```
 
 Validation is in FluentValidation. Business logic stays in `ReminderService`, data access in `ReminderRepository`.
+
+### Database
+
+Single entity: `Reminder` (`Domain/Entities/Reminder.cs`). Mapped to table `reminders` with an index on `(Status, SendAt)` so the worker can find due items quickly. Migrations live in `Migrations/` — `InitialCreate` sets up the schema.
 
 ## Config
 
@@ -59,7 +67,7 @@ Important settings (env vars use `__` instead of `:`):
 | `ConnectionStrings__DefaultConnection` | Postgres |
 | `ReminderProcessor__PollingIntervalSeconds` | default 15 |
 | `ReminderDelivery__LogFilePath` | default `logs/reminders.log` |
-| `ApiAuth__ScheduleToken` | Bearer token for POST/PUT/DELETE |
+| `ApiAuth__ScheduleToken` | Bearer token for all `/reminders` endpoints + SignalR hub |
 | `Brevo__Enabled` | `false` by default |
 | `Brevo__Login`, `Brevo__Password`, `Brevo__SenderEmail` | SMTP credentials |
 

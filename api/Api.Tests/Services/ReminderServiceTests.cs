@@ -24,6 +24,7 @@ public class ReminderServiceTests
             _repository.Object,
             _deliveryService.Object,
             _unitOfWork.Object,
+            Mock.Of<IReminderNotifier>(),
             Mock.Of<ILogger<ReminderService>>());
     }
 

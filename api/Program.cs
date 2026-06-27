@@ -1,4 +1,5 @@
 using Api.Extensions;
+using Api.Hubs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -21,11 +22,11 @@ builder.Services.AddCors(options =>
 
         if (corsOrigins.Length > 0)
         {
-            policyBuilder.WithOrigins(corsOrigins);
+            policyBuilder.WithOrigins(corsOrigins).AllowCredentials();
         }
         else
         {
-            policyBuilder.SetIsOriginAllowed(_ => true);
+            policyBuilder.SetIsOriginAllowed(_ => true).AllowCredentials();
         }
     });
 });
@@ -35,6 +36,7 @@ builder.Services.AddControllers()
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddApplicationServices(builder.Configuration);
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -99,6 +101,7 @@ if (app.Configuration.GetValue("HealthChecks:Enabled", true))
 }
 
 app.MapControllers();
+app.MapHub<RemindersHub>("/hubs/reminders");
 
 app.Run();
 

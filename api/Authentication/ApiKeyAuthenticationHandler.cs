@@ -23,19 +23,11 @@ public sealed class ApiKeyAuthenticationHandler(
             return Task.FromResult(AuthenticateResult.Fail("API schedule token is not configured."));
         }
 
-        if (!Request.Headers.TryGetValue("Authorization", out var authorizationHeader))
+        if (!TryGetBearerToken(out var providedToken))
         {
             return Task.FromResult(AuthenticateResult.Fail("Missing Authorization header."));
         }
 
-        var headerValue = authorizationHeader.ToString();
-        const string bearerPrefix = "Bearer ";
-        if (!headerValue.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            return Task.FromResult(AuthenticateResult.Fail("Authorization header must use Bearer scheme."));
-        }
-
-        var providedToken = headerValue[bearerPrefix.Length..].Trim();
         if (!TokensMatch(providedToken, configuredToken))
         {
             return Task.FromResult(AuthenticateResult.Fail("Invalid API token."));
@@ -48,6 +40,32 @@ public sealed class ApiKeyAuthenticationHandler(
         var ticket = new AuthenticationTicket(principal, Scheme.Name);
 
         return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+
+    private bool TryGetBearerToken(out string token)
+    {
+        token = string.Empty;
+        const string bearerPrefix = "Bearer ";
+
+        if (Request.Headers.TryGetValue("Authorization", out var authorizationHeader))
+        {
+            var headerValue = authorizationHeader.ToString();
+            if (headerValue.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                token = headerValue[bearerPrefix.Length..].Trim();
+                return token.Length > 0;
+            }
+
+            return false;
+        }
+
+        if (Request.Query.TryGetValue("access_token", out var accessToken))
+        {
+            token = accessToken.ToString().Trim();
+            return token.Length > 0;
+        }
+
+        return false;
     }
 
     private static bool TokensMatch(string provided, string expected)

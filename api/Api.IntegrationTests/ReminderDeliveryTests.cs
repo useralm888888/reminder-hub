@@ -42,6 +42,7 @@ public class ReminderDeliveryTests : IClassFixture<ReminderApiFactory>
         await reminderService.ProcessDueRemindersAsync();
 
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "test-token");
         var list = await client.GetFromJsonAsync<ReminderListResponse>("/reminders", JsonOptions);
         var item = list!.Items.Single(r => r.Id == created.Id);
         item.Status.Should().Be(ReminderStatus.Sent);

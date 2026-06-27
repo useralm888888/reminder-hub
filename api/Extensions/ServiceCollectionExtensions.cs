@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IReminderRepository, ReminderRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IReminderService, ReminderService>();
+        services.AddSingleton<IReminderNotifier, SignalRReminderNotifier>();
 
         services.AddSingleton<FileReminderDeliveryService>();
         services.AddSingleton<IReminderEmailSender, BrevoSmtpEmailSender>();
