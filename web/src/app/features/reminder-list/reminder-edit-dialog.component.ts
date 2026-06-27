@@ -68,6 +68,8 @@ export class ReminderEditDialogComponent {
   }
 
   protected async save(): Promise<void> {
+    this.form.updateValueAndValidity();
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.submitAttempted.set(true);

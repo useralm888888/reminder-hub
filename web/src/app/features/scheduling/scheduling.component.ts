@@ -59,6 +59,8 @@ export class SchedulingComponent {
   );
 
   protected async submit(): Promise<void> {
+    this.form.updateValueAndValidity();
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.submitAttempted.set(true);
