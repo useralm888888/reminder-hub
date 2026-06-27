@@ -41,7 +41,10 @@ public class BrevoSmtpEmailSender : IReminderEmailSender
         message.Subject = "Reminder";
         message.Body = new TextPart("plain") { Text = reminder.Message };
 
-        using var client = new SmtpClient();
+        using var client = new SmtpClient
+        {
+            Timeout = 30_000,
+        };
         await client.ConnectAsync(
             _options.SmtpHost,
             _options.SmtpPort,

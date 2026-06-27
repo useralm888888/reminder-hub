@@ -30,8 +30,9 @@ public static class ServiceCollectionExtensions
             configuration.GetSection(ReminderProcessorOptions.SectionName));
         services.Configure<ReminderDeliveryOptions>(
             configuration.GetSection(ReminderDeliveryOptions.SectionName));
-        services.Configure<BrevoSmtpOptions>(
-            configuration.GetSection(BrevoSmtpOptions.SectionName));
+        services.AddOptions<BrevoSmtpOptions>()
+            .Bind(configuration.GetSection(BrevoSmtpOptions.SectionName))
+            .PostConfigure(options => BrevoConfigurationNormalizer.Apply(options, configuration));
         services.Configure<ApiAuthOptions>(
             configuration.GetSection(ApiAuthOptions.SectionName));
         services.Configure<AuthOptions>(

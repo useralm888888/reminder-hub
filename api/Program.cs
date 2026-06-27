@@ -1,6 +1,8 @@
 using Api.Extensions;
 using Api.Hubs;
+using Api.Options;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
@@ -75,6 +77,8 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+LogBrevoConfiguration(app);
+
 await app.ApplyDatabaseMigrationsAsync();
 
 app.UseExceptionHandler();
@@ -104,6 +108,35 @@ app.MapControllers();
 app.MapHub<RemindersHub>("/hubs/reminders");
 
 app.Run();
+
+static void LogBrevoConfiguration(WebApplication app)
+{
+    var brevo = app.Services.GetRequiredService<IOptions<BrevoSmtpOptions>>().Value;
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+    if (!brevo.Enabled)
+    {
+        logger.LogWarning(
+            "Brevo email is disabled (Brevo:Enabled=false). Reminders will be marked Sent after file log only.");
+        return;
+    }
+
+    if (!brevo.IsConfigured)
+    {
+        logger.LogWarning(
+            "Brevo is enabled but incomplete. Login set={HasLogin}, Password set={HasPassword}, SenderEmail set={HasSenderEmail}",
+            !string.IsNullOrWhiteSpace(brevo.Login),
+            !string.IsNullOrWhiteSpace(brevo.Password),
+            !string.IsNullOrWhiteSpace(brevo.SenderEmail));
+        return;
+    }
+
+    logger.LogInformation(
+        "Brevo email delivery active. SMTP={Host}:{Port}, Sender={SenderEmail}",
+        brevo.SmtpHost,
+        brevo.SmtpPort,
+        brevo.SenderEmail);
+}
 
 static string[] GetCorsOrigins(IConfiguration configuration)
 {
