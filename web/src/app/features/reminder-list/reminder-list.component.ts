@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -7,6 +7,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { getErrorMessage } from '../../core/errors/http-error.context';
 import { Reminder } from '../../core/models/reminder.model';
+import { ReminderHubService } from '../../core/services/reminder-hub.service';
 import { ReminderService } from '../../core/services/reminder.service';
 import {
   ReminderEditDialogComponent,
@@ -21,6 +22,8 @@ import {
 })
 export class ReminderListComponent implements OnInit {
   private readonly reminderService = inject(ReminderService);
+  private readonly reminderHub = inject(ReminderHubService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -38,6 +41,19 @@ export class ReminderListComponent implements OnInit {
 
   ngOnInit(): void {
     void this.loadPage(1);
+    void this.startRealtimeUpdates();
+  }
+
+  private async startRealtimeUpdates(): Promise<void> {
+    await this.reminderHub.start(() => {
+      void firstValueFrom(this.reminderService.loadReminders(this.currentPage())).catch(
+        () => undefined,
+      );
+    });
+
+    this.destroyRef.onDestroy(() => {
+      void this.reminderHub.stop();
+    });
   }
 
   protected loadPage(page: number): void {

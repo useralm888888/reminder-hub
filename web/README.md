@@ -1,6 +1,8 @@
 # Reminder Hub — Angular frontend
 
-Angular 21 SPA for the Reminder Hub assignment. Provides login, reminder list, scheduling, edit, and delete.
+Angular 21 SPA for the Reminder Hub assignment. Login, reminder list, scheduling, edit, delete.
+
+The list page connects to the API's SignalR hub on load. When a reminder goes from `Scheduled` to `Sent`, the UI refreshes that page automatically — no manual reload.
 
 ## Prerequisites
 
@@ -55,12 +57,16 @@ The Docker build (`npm run build:railway`) writes this into `browser/config.json
 ```
 src/app/
 ├── core/           # Config, services, interceptors, guards
+│   └── services/
+│       └── reminder-hub.service.ts   # SignalR connection
 ├── features/
 │   ├── auth/       # Login
 │   ├── scheduling/ # Create reminder
 │   └── reminder-list/
 └── layout/         # App shell
 ```
+
+SignalR client: `@microsoft/signalr`. The hub URL is `{apiBaseUrl}/hubs/reminders`; auth token comes from the same session storage as REST calls.
 
 ## Scripts
 
@@ -81,4 +87,4 @@ Railway settings:
 - **Config file:** `/web/railway.toml`
 - **Variable:** `API_BASE_URL` = your API public URL
 
-Ensure the API allows the frontend origin via `CORS_ALLOWED_ORIGINS`.
+Ensure the API allows the frontend origin via `CORS_ALLOWED_ORIGINS`. SignalR needs credentials enabled on CORS (already set on the API side).
