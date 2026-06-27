@@ -40,8 +40,8 @@
           @if (form.controls.time.hasError('required') && form.controls.time.touched) {
             <mat-error>Time is required.</mat-error>
           }
-          @if (hasFutureDateTimeError(form) && form.controls.time.touched) {
-            <mat-error>Scheduled time must be in the future.</mat-error>
+          @if (shouldShowFutureDateTimeError(form, submitAttempted())) {
+            <mat-error>{{ scheduledInFutureMessage }}</mat-error>
           }
         </mat-form-field>
       </div>

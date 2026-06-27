@@ -2,6 +2,9 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 import { buildScheduledAt } from '../utils/schedule-datetime.util';
 
+export const SCHEDULED_IN_FUTURE_MESSAGE =
+  'Cannot schedule at the current time. Choose a date and time in the future.';
+
 export function scheduledInFutureValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const date = control.get('date')?.value;
@@ -17,6 +20,12 @@ export function scheduledInFutureValidator(): ValidatorFn {
   };
 }
 
-export function hasFutureDateTimeError(control: AbstractControl): boolean {
-  return control.hasError('futureDateTime') && (control.touched || control.dirty);
+export function shouldShowFutureDateTimeError(
+  control: AbstractControl,
+  submitAttempted: boolean,
+): boolean {
+  return (
+    control.hasError('futureDateTime')
+    && (submitAttempted || control.touched || control.dirty)
+  );
 }

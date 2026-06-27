@@ -14,6 +14,7 @@ describe('SchedulingComponent', () => {
     const reminderService = {
       create: vi.fn(),
     };
+    const snackBar = { open: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [SchedulingComponent],
@@ -21,7 +22,7 @@ describe('SchedulingComponent', () => {
         provideNativeDateAdapter(),
         provideRouter([]),
         { provide: ReminderService, useValue: reminderService },
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: MatSnackBar, useValue: snackBar },
       ],
     }).compileComponents();
 
@@ -43,6 +44,8 @@ describe('SchedulingComponent', () => {
 
     expect(reminderService.create).not.toHaveBeenCalled();
     expect(component['form'].hasError('futureDateTime')).toBe(true);
+    expect(snackBar.open).toHaveBeenCalled();
+    expect(component['submitAttempted']()).toBe(true);
   });
 
   it('creates a reminder when the form is valid', async () => {

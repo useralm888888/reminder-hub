@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -14,8 +14,9 @@ import { getErrorMessage } from '../../core/errors/http-error.context';
 import { ReminderService } from '../../core/services/reminder.service';
 import { buildScheduledAt, isScheduleDateAllowed } from '../../core/utils/schedule-datetime.util';
 import {
-  hasFutureDateTimeError,
+  SCHEDULED_IN_FUTURE_MESSAGE,
   scheduledInFutureValidator,
+  shouldShowFutureDateTimeError,
 } from '../../core/validators/scheduled-in-future.validator';
 
 @Component({
@@ -39,9 +40,12 @@ export class SchedulingComponent {
   private readonly reminderService = inject(ReminderService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   protected readonly submitting = signal(false);
-  protected readonly hasFutureDateTimeError = hasFutureDateTimeError;
+  protected readonly submitAttempted = signal(false);
+  protected readonly scheduledInFutureMessage = SCHEDULED_IN_FUTURE_MESSAGE;
+  protected readonly shouldShowFutureDateTimeError = shouldShowFutureDateTimeError;
   protected readonly scheduleDateFilter = isScheduleDateAllowed;
 
   protected readonly form = this.fb.nonNullable.group(
@@ -57,8 +61,17 @@ export class SchedulingComponent {
   protected async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.submitAttempted.set(true);
+      this.cdr.markForCheck();
+
+      if (this.form.hasError('futureDateTime')) {
+        this.snackBar.open(SCHEDULED_IN_FUTURE_MESSAGE, 'Close', { duration: 5000 });
+      }
+
       return;
     }
+
+    this.submitAttempted.set(false);
 
     const { message, date, time, email } = this.form.getRawValue();
     const scheduledAt = buildScheduledAt(date, time);
