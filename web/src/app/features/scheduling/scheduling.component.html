@@ -12,6 +12,9 @@
         @if (form.controls.message.hasError('required') && form.controls.message.touched) {
           <mat-error>Message is required.</mat-error>
         }
+        @if (form.controls.message.hasError('maxlength') && form.controls.message.touched) {
+          <mat-error>Message cannot exceed 500 characters.</mat-error>
+        }
       </mat-form-field>
 
       <div class="scheduling__datetime">
@@ -31,6 +34,9 @@
           <mat-icon class="scheduling__field-icon" matIconSuffix>schedule</mat-icon>
           @if (form.controls.time.hasError('required') && form.controls.time.touched) {
             <mat-error>Time is required.</mat-error>
+          }
+          @if (hasFutureDateTimeError(form) && form.controls.time.touched) {
+            <mat-error>Scheduled time must be in the future.</mat-error>
           }
         </mat-form-field>
       </div>

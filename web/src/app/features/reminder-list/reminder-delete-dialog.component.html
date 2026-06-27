@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Delete reminder</h2>
+
+<mat-dialog-content class="reminder-delete-dialog__content">
+  <p>Delete reminder "{{ data.message }}"?</p>
+  <p class="reminder-delete-dialog__hint">This action cannot be undone.</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="reminder-delete-dialog__actions">
+  <button class="app-btn reminder-delete-dialog__btn" type="button" (click)="cancel()">
+    Cancel
+  </button>
+  <button
+    class="app-btn reminder-delete-dialog__btn reminder-delete-dialog__btn--danger"
+    type="button"
+    (click)="confirm()"
+  >
+    Delete
+  </button>
+</mat-dialog-actions>

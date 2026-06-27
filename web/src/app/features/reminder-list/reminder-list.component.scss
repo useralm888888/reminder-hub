@@ -12,6 +12,12 @@
     background: #fef2f2;
     color: #b91c1c;
     font-size: 0.875rem;
+
+    @include bem.modifier(warning) {
+      border-color: #fcd34d;
+      background: #fffbeb;
+      color: #92400e;
+    }
   }
 
   @include bem.element(stats) {

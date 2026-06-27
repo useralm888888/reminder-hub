@@ -1,4 +1,10 @@
 <section class="reminder-list">
+  @if (connectionFailed()) {
+    <div class="reminder-list__alert reminder-list__alert--warning" role="status">
+      Live updates are unavailable. The list still works — refresh the page to see changes.
+    </div>
+  }
+
   @if (loadError()) {
     <div class="reminder-list__alert" role="alert">
       {{ loadError() }}

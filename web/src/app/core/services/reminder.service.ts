@@ -9,20 +9,10 @@ import { CreateReminderResponse } from '../api/responses/create-reminder.respons
 import { ReminderListResponse } from '../api/responses/reminder-list.response';
 import { API_CONFIG } from '../config/api.config';
 import { getErrorMessage } from '../errors/http-error.context';
+import { CreateReminderPayload } from '../interfaces/create-reminder-payload.interface';
+import { UpdateReminderPayload } from '../interfaces/update-reminder-payload.interface';
 import { mapReminderDto } from '../mappers/reminder.mapper';
 import { Reminder } from '../models/reminder.model';
-
-export interface CreateReminderPayload {
-  message: string;
-  scheduledAt: Date;
-  email?: string;
-}
-
-export interface UpdateReminderPayload {
-  message: string;
-  scheduledAt: Date;
-  email?: string;
-}
 
 @Injectable({ providedIn: 'root' })
 export class ReminderService {
@@ -37,6 +27,7 @@ export class ReminderService {
   private readonly totalCount = signal(0);
   private readonly scheduledCount = signal(0);
   private readonly sentCount = signal(0);
+  private loadRequestId = 0;
 
   readonly items = this.reminders.asReadonly();
   readonly isLoading = this.loading.asReadonly();
@@ -52,6 +43,7 @@ export class ReminderService {
   );
 
   loadReminders(page = this.page()): Observable<Reminder[]> {
+    const requestId = ++this.loadRequestId;
     this.loading.set(true);
     this.error.set(null);
 
@@ -63,6 +55,10 @@ export class ReminderService {
       .get<ReminderListResponse>(`${this.apiConfig.baseUrl}/reminders`, { params })
       .pipe(
         map((response) => {
+          if (requestId !== this.loadRequestId) {
+            return this.reminders();
+          }
+
           this.page.set(response.page);
           this.pageSize.set(response.pageSize);
           this.totalCount.set(response.totalCount);
@@ -70,13 +66,24 @@ export class ReminderService {
           this.sentCount.set(response.sentCount);
           return response.items.map(mapReminderDto);
         }),
-        tap((items) => this.reminders.set(items)),
+        tap((items) => {
+          if (requestId === this.loadRequestId) {
+            this.reminders.set(items);
+          }
+        }),
         catchError((error) => {
-          this.error.set(getErrorMessage(error, 'Failed to load reminders.'));
-          this.reminders.set([]);
+          if (requestId === this.loadRequestId) {
+            this.error.set(getErrorMessage(error, 'Failed to load reminders.'));
+            this.reminders.set([]);
+          }
+
           return throwError(() => error);
         }),
-        finalize(() => this.loading.set(false)),
+        finalize(() => {
+          if (requestId === this.loadRequestId) {
+            this.loading.set(false);
+          }
+        }),
       );
   }
 

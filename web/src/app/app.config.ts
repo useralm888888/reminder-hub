@@ -12,6 +12,7 @@ import { routes } from './app.routes';
 import { AppConfigService } from './core/config/app-config.service';
 import { apiTokenInterceptor } from './core/interceptors/api-token.interceptor';
 import { httpErrorInterceptor } from './core/interceptors/http-error.interceptor';
+import { unauthorizedInterceptor } from './core/interceptors/unauthorized.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,7 +20,9 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideNativeDateAdapter(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([apiTokenInterceptor, httpErrorInterceptor])),
+    provideHttpClient(
+      withInterceptors([apiTokenInterceptor, unauthorizedInterceptor, httpErrorInterceptor]),
+    ),
     {
       provide: APP_INITIALIZER,
       useFactory: (appConfigService: AppConfigService) => () => appConfigService.load(),

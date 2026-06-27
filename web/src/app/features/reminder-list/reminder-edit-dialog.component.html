@@ -9,6 +9,12 @@
     <mat-form-field appearance="outline">
       <mat-label>Message</mat-label>
       <textarea matInput rows="3" formControlName="message"></textarea>
+      @if (form.controls.message.hasError('required') && form.controls.message.touched) {
+        <mat-error>Message is required.</mat-error>
+      }
+      @if (form.controls.message.hasError('maxlength') && form.controls.message.touched) {
+        <mat-error>Message cannot exceed 500 characters.</mat-error>
+      }
     </mat-form-field>
 
     <div class="reminder-edit-dialog__datetime">
@@ -28,12 +34,18 @@
         @if (form.controls.time.hasError('required') && form.controls.time.touched) {
           <mat-error>Time is required.</mat-error>
         }
+        @if (hasFutureDateTimeError(form) && form.controls.time.touched) {
+          <mat-error>Scheduled time must be in the future.</mat-error>
+        }
       </mat-form-field>
     </div>
 
     <mat-form-field appearance="outline">
       <mat-label>Email (optional)</mat-label>
       <input matInput type="email" formControlName="email" />
+      @if (form.controls.email.hasError('email') && form.controls.email.touched) {
+        <mat-error>Enter a valid email address.</mat-error>
+      }
     </mat-form-field>
   </form>
 </mat-dialog-content>

@@ -1,5 +1,6 @@
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -13,9 +14,14 @@ import {
   ReminderEditDialogComponent,
   ReminderEditDialogData,
 } from './reminder-edit-dialog.component';
+import {
+  ReminderDeleteDialogComponent,
+  ReminderDeleteDialogData,
+} from './reminder-delete-dialog.component';
 
 @Component({
   selector: 'app-reminder-list',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe, MatDialogModule, MatIconModule, MatSnackBarModule],
   templateUrl: './reminder-list.component.html',
   styleUrl: './reminder-list.component.scss',
@@ -38,6 +44,7 @@ export class ReminderListComponent implements OnInit {
   protected readonly pageSize = this.reminderService.itemsPerPage;
 
   protected readonly deletingId = signal<string | null>(null);
+  protected readonly connectionFailed = this.reminderHub.connectionFailed;
 
   ngOnInit(): void {
     void this.loadPage(1);
@@ -85,16 +92,27 @@ export class ReminderListComponent implements OnInit {
       },
     );
 
-    dialogRef.afterClosed().subscribe((saved) => {
-      if (saved) {
-        this.snackBar.open('Reminder updated.', 'Close', { duration: 3000 });
-        this.loadPage(this.currentPage());
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((saved) => {
+        if (saved) {
+          this.snackBar.open('Reminder updated.', 'Close', { duration: 3000 });
+          this.loadPage(this.currentPage());
+        }
+      });
   }
 
   protected async deleteReminder(reminder: Reminder): Promise<void> {
-    const confirmed = globalThis.confirm(`Delete reminder "${reminder.message}"?`);
+    const dialogRef = this.dialog.open<ReminderDeleteDialogComponent, ReminderDeleteDialogData, boolean>(
+      ReminderDeleteDialogComponent,
+      {
+        data: { message: reminder.message },
+        width: '24rem',
+      },
+    );
+
+    const confirmed = await firstValueFrom(dialogRef.afterClosed());
     if (!confirmed) {
       return;
     }

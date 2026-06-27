@@ -73,6 +73,11 @@
     gap: 0.35rem;
   }
 
+  @include bem.element(field-error) {
+    color: #b91c1c;
+    font-size: 0.8125rem;
+  }
+
   @include bem.element(label) {
     font-size: 0.875rem;
     font-weight: 500;

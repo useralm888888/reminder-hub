@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -12,9 +12,15 @@ import { firstValueFrom } from 'rxjs';
 
 import { getErrorMessage } from '../../core/errors/http-error.context';
 import { ReminderService } from '../../core/services/reminder.service';
+import { buildScheduledAt } from '../../core/utils/schedule-datetime.util';
+import {
+  hasFutureDateTimeError,
+  scheduledInFutureValidator,
+} from '../../core/validators/scheduled-in-future.validator';
 
 @Component({
   selector: 'app-scheduling',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     MatCardModule,
@@ -35,13 +41,17 @@ export class SchedulingComponent {
   private readonly router = inject(Router);
 
   protected readonly submitting = signal(false);
+  protected readonly hasFutureDateTimeError = hasFutureDateTimeError;
 
-  protected readonly form = this.fb.nonNullable.group({
-    message: ['', [Validators.required, Validators.maxLength(500)]],
-    date: [new Date(), Validators.required],
-    time: ['12:00', Validators.required],
-    email: ['', Validators.email],
-  });
+  protected readonly form = this.fb.nonNullable.group(
+    {
+      message: ['', [Validators.required, Validators.maxLength(500)]],
+      date: [new Date(), Validators.required],
+      time: ['12:00', Validators.required],
+      email: ['', Validators.email],
+    },
+    { validators: scheduledInFutureValidator() },
+  );
 
   protected async submit(): Promise<void> {
     if (this.form.invalid) {
@@ -50,9 +60,7 @@ export class SchedulingComponent {
     }
 
     const { message, date, time, email } = this.form.getRawValue();
-    const [hours, minutes] = time.split(':').map(Number);
-    const scheduledAt = new Date(date);
-    scheduledAt.setHours(hours, minutes, 0, 0);
+    const scheduledAt = buildScheduledAt(date, time);
 
     this.submitting.set(true);
 

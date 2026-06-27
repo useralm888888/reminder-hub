@@ -1,0 +1,22 @@
+.reminder-delete-dialog__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 18rem;
+}
+
+.reminder-delete-dialog__hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.reminder-delete-dialog__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.reminder-delete-dialog__btn--danger {
+  background: #dc2626;
+  color: #fff;
+}

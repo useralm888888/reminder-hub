@@ -7,8 +7,8 @@ import { ApiTokenService } from '../services/api-token.service';
 export const apiTokenInterceptor: HttpInterceptorFn = (req, next) => {
   const apiConfig = inject(API_CONFIG);
   const tokenService = inject(ApiTokenService);
-  const remindersUrl = `${apiConfig.baseUrl}/reminders`;
-  const requiresToken = req.url.startsWith(remindersUrl);
+  const requiresToken =
+    req.url.startsWith(apiConfig.baseUrl) && !req.url.includes('/auth/login');
 
   if (requiresToken) {
     const token = tokenService.getToken();

@@ -21,6 +21,9 @@
           autocomplete="username"
           placeholder="admin"
         />
+        @if (form.controls.username.hasError('required') && form.controls.username.touched) {
+          <span class="login__field-error">Username is required.</span>
+        }
       </label>
 
       <label class="login__field">
@@ -42,6 +45,9 @@
             {{ showPassword() ? 'Hide' : 'Show' }}
           </button>
         </div>
+        @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+          <span class="login__field-error">Password is required.</span>
+        }
       </label>
 
       <button class="login__submit app-btn" type="submit" [disabled]="submitting()">

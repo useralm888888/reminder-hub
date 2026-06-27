@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -8,6 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -22,8 +23,8 @@ export class LoginComponent {
   protected readonly showPassword = signal(false);
 
   protected readonly form = this.fb.nonNullable.group({
-    username: ['admin', Validators.required],
-    password: ['admin', Validators.required],
+    username: ['', Validators.required],
+    password: ['', Validators.required],
   });
 
   protected togglePasswordVisibility(): void {

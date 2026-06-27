@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -10,6 +10,14 @@ import { firstValueFrom } from 'rxjs';
 import { getErrorMessage } from '../../core/errors/http-error.context';
 import { Reminder } from '../../core/models/reminder.model';
 import { ReminderService } from '../../core/services/reminder.service';
+import {
+  buildScheduledAt,
+  formatTimeFromDate,
+} from '../../core/utils/schedule-datetime.util';
+import {
+  hasFutureDateTimeError,
+  scheduledInFutureValidator,
+} from '../../core/validators/scheduled-in-future.validator';
 
 export interface ReminderEditDialogData {
   reminder: Reminder;
@@ -17,6 +25,7 @@ export interface ReminderEditDialogData {
 
 @Component({
   selector: 'app-reminder-edit-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     MatDialogModule,
@@ -36,13 +45,17 @@ export class ReminderEditDialogComponent {
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly hasFutureDateTimeError = hasFutureDateTimeError;
 
-  protected readonly form = this.fb.nonNullable.group({
-    message: [this.data.reminder.message, [Validators.required, Validators.maxLength(500)]],
-    date: [new Date(this.data.reminder.scheduledAt), Validators.required],
-    time: [this.formatTime(this.data.reminder.scheduledAt), Validators.required],
-    email: [this.data.reminder.email ?? '', Validators.email],
-  });
+  protected readonly form = this.fb.nonNullable.group(
+    {
+      message: [this.data.reminder.message, [Validators.required, Validators.maxLength(500)]],
+      date: [new Date(this.data.reminder.scheduledAt), Validators.required],
+      time: [formatTimeFromDate(this.data.reminder.scheduledAt), Validators.required],
+      email: [this.data.reminder.email ?? '', Validators.email],
+    },
+    { validators: scheduledInFutureValidator() },
+  );
 
   protected close(): void {
     this.dialogRef.close(false);
@@ -55,9 +68,7 @@ export class ReminderEditDialogComponent {
     }
 
     const { message, date, time, email } = this.form.getRawValue();
-    const [hours, minutes] = time.split(':').map(Number);
-    const scheduledAt = new Date(date);
-    scheduledAt.setHours(hours, minutes, 0, 0);
+    const scheduledAt = buildScheduledAt(date, time);
 
     this.submitting.set(true);
     this.errorMessage.set(null);
@@ -76,11 +87,5 @@ export class ReminderEditDialogComponent {
     } finally {
       this.submitting.set(false);
     }
-  }
-
-  private formatTime(date: Date): string {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
   }
 }
