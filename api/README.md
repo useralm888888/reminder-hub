@@ -6,7 +6,7 @@ See the [root README](../README.md) for full-stack setup and deployment.
 
 ## Run locally
 
-`appsettings*.json` files are gitignored. Create `appsettings.Development.json` locally (see [root README](../README.md) for a starter template).
+`appsettings*.json` files are gitignored. Copy [`appsettings.Development.example.json`](appsettings.Development.example.json) to `appsettings.Development.json` locally.
 
 ```bash
 cd api
