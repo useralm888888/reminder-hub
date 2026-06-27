@@ -13,7 +13,7 @@ import { ReminderService } from '../../core/services/reminder.service';
 import {
   buildScheduledAt,
   formatTimeFromDate,
-  startOfToday,
+  isScheduleDateAllowed,
 } from '../../core/utils/schedule-datetime.util';
 import {
   hasFutureDateTimeError,
@@ -47,7 +47,7 @@ export class ReminderEditDialogComponent {
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly hasFutureDateTimeError = hasFutureDateTimeError;
-  protected readonly minDate = startOfToday();
+  protected readonly scheduleDateFilter = isScheduleDateAllowed;
 
   protected readonly form = this.fb.nonNullable.group(
     {

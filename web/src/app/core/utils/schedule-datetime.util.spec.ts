@@ -1,4 +1,4 @@
-import { buildScheduledAt, formatTimeFromDate } from './schedule-datetime.util';
+import { buildScheduledAt, formatTimeFromDate, isScheduleDateAllowed } from './schedule-datetime.util';
 
 describe('schedule-datetime.util', () => {
   it('buildScheduledAt merges date and time in local timezone', () => {
@@ -17,5 +17,13 @@ describe('schedule-datetime.util', () => {
     const date = new Date(2026, 0, 1, 9, 5);
 
     expect(formatTimeFromDate(date)).toBe('09:05');
+  });
+
+  it('isScheduleDateAllowed rejects dates before today', () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    expect(isScheduleDateAllowed(yesterday)).toBe(false);
+    expect(isScheduleDateAllowed(new Date())).toBe(true);
   });
 });
