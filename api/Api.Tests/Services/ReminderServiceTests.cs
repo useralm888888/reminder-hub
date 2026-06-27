@@ -104,6 +104,66 @@ public class ReminderServiceTests
         _repository.Verify(r => r.DeleteAsync(reminder.Id, It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [Fact]
+    public async Task ProcessDueRemindersAsync_WhenNoDueReminders_DoesNotDeliver()
+    {
+        _repository
+            .Setup(r => r.GetDueRemindersAsync(It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<Reminder>());
+
+        await _sut.ProcessDueRemindersAsync();
+
+        _deliveryService.Verify(
+            d => d.DeliverAsync(It.IsAny<Reminder>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessDueRemindersAsync_WhenDueReminder_DeliversAndMarksAsSent()
+    {
+        var reminder = CreateReminder();
+        reminder.SendAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+
+        _repository
+            .Setup(r => r.GetDueRemindersAsync(It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Reminder> { reminder });
+
+        _repository
+            .Setup(r => r.MarkAsSentAsync(reminder.Id, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await _sut.ProcessDueRemindersAsync();
+
+        _deliveryService.Verify(
+            d => d.DeliverAsync(reminder, It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _repository.Verify(
+            r => r.MarkAsSentAsync(reminder.Id, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessDueRemindersAsync_WhenDeliveryFails_DoesNotMarkAsSent()
+    {
+        var reminder = CreateReminder();
+        reminder.SendAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+
+        _repository
+            .Setup(r => r.GetDueRemindersAsync(It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Reminder> { reminder });
+
+        _deliveryService
+            .Setup(d => d.DeliverAsync(reminder, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new IOException("Log file is not writable."));
+
+        await _sut.ProcessDueRemindersAsync();
+
+        _repository.Verify(
+            r => r.MarkAsSentAsync(It.IsAny<Guid>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     private static Reminder CreateReminder(ReminderStatus status = ReminderStatus.Scheduled)
     {
         return new Reminder

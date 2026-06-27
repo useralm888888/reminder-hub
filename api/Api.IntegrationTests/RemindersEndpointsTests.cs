@@ -28,7 +28,7 @@ public class RemindersEndpointsTests : IClassFixture<ReminderApiFactory>
     {
         await CreateReminderAsync("First reminder");
 
-        var client = _factory.CreateClient();
+        using var client = CreateAuthorizedClient();
         var response = await client.GetAsync("/reminders");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -79,8 +79,7 @@ public class RemindersEndpointsTests : IClassFixture<ReminderApiFactory>
         var deleteResponse = await authorizedClient.DeleteAsync($"/reminders/{created.Id}");
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var listClient = _factory.CreateClient();
-        var listResponse = await listClient.GetFromJsonAsync<ReminderListResponse>("/reminders", JsonOptions);
+        var listResponse = await authorizedClient.GetFromJsonAsync<ReminderListResponse>("/reminders", JsonOptions);
         listResponse!.Items.Should().NotContain(r => r.Id == created.Id);
     }
 

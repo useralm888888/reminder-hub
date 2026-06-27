@@ -105,14 +105,20 @@ public class ReminderRepository(AppDbContext context) : IReminderRepository
         DateTimeOffset sentAt,
         CancellationToken cancellationToken = default)
     {
-        var rowsAffected = await context.Reminders
-            .Where(r => r.Id == id && r.Status == ReminderStatus.Scheduled)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(r => r.Status, ReminderStatus.Sent)
-                    .SetProperty(r => r.SentAt, sentAt),
+        var reminder = await context.Reminders
+            .FirstOrDefaultAsync(
+                r => r.Id == id && r.Status == ReminderStatus.Scheduled,
                 cancellationToken);
 
-        return rowsAffected > 0;
+        if (reminder is null)
+        {
+            return false;
+        }
+
+        reminder.Status = ReminderStatus.Sent;
+        reminder.SentAt = sentAt;
+        await context.SaveChangesAsync(cancellationToken);
+
+        return true;
     }
 }

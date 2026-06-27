@@ -63,7 +63,8 @@ public static class ServiceCollectionExtensions
 
             return new CompositeReminderDeliveryService(
                 fileDelivery,
-                sp.GetRequiredService<IReminderEmailSender>());
+                sp.GetRequiredService<IReminderEmailSender>(),
+                sp.GetRequiredService<ILogger<CompositeReminderDeliveryService>>());
         });
         services.AddHostedService<ReminderProcessorHostedService>();
 

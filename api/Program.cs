@@ -17,17 +17,15 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
+        var policyBuilder = policy.AllowAnyHeader().AllowAnyMethod();
+
         if (corsOrigins.Length > 0)
         {
-            policy.WithOrigins(corsOrigins)
-                .AllowAnyHeader()
-                .AllowAnyMethod();
+            policyBuilder.WithOrigins(corsOrigins);
         }
         else
         {
-            policy.AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod();
+            policyBuilder.SetIsOriginAllowed(_ => true);
         }
     });
 });
@@ -78,6 +76,7 @@ var app = builder.Build();
 await app.ApplyDatabaseMigrationsAsync();
 
 app.UseExceptionHandler();
+app.UseRouting();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -110,6 +109,12 @@ static string[] GetCorsOrigins(IConfiguration configuration)
     {
         return envOrigins
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
+    if (!string.IsNullOrWhiteSpace(frontendUrl))
+    {
+        return [frontendUrl.Trim().TrimEnd('/')];
     }
 
     return configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
