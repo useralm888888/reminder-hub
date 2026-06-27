@@ -1,59 +1,84 @@
-# Web
+# Reminder Hub — Angular frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.17.
+Angular 21 SPA for the Reminder Hub assignment. Provides login, reminder list, scheduling, edit, and delete.
 
-## Development server
+## Prerequisites
 
-To start a local development server, run:
+- Node.js 22+
+- Running API (see [root README](../README.md) or [`api/README.md`](../api/README.md))
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Local development
 
 ```bash
-ng generate component component-name
+cd web
+npm ci
+npm run dev
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Open `http://localhost:4200`.
 
-```bash
-ng generate --help
+Default login: **admin / admin** (configured in `api/appsettings.Development.json`).
+
+## API URL configuration
+
+The frontend does not hardcode the API URL in TypeScript services. It loads runtime config on startup:
+
+| Source | Used when |
+|--------|-----------|
+| `public/config.json` | Local dev (`ng serve`) |
+| `browser/config.json` (build output) | Production Docker / Railway build |
+
+Default local value in `public/config.json`:
+
+```json
+{
+  "api": {
+    "baseUrl": "http://localhost:5169"
+  }
+}
 ```
 
-## Building
+Change `baseUrl` if your API runs on a different port.
 
-To build the project run:
+### Railway / production
 
-```bash
-ng build
+Set on the **frontend** Railway service:
+
+```
+API_BASE_URL=https://your-api-service.up.railway.app
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+The Docker build (`npm run build:railway`) writes this into `browser/config.json`.
 
-## Running unit tests
+## Project structure
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
+```
+src/app/
+├── core/           # Config, services, interceptors, guards
+├── features/
+│   ├── auth/       # Login
+│   ├── scheduling/ # Create reminder
+│   └── reminder-list/
+└── layout/         # App shell
 ```
 
-## Running end-to-end tests
+## Scripts
 
-For end-to-end (e2e) testing, run:
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Dev server (`http://localhost:4200`) |
+| `npm run build` | Production build → `browser/` |
+| `npm run build:railway` | Build + write `config.json` from `API_BASE_URL` |
+| `npm test` | Unit tests (Vitest) |
 
-```bash
-ng e2e
-```
+## Deployment
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Deployed via Docker + Caddy (see `Dockerfile`, `Caddyfile`, `railway.toml`).
 
-## Additional Resources
+Railway settings:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **Root directory:** `web`
+- **Config file:** `/web/railway.toml`
+- **Variable:** `API_BASE_URL` = your API public URL
+
+Ensure the API allows the frontend origin via `CORS_ALLOWED_ORIGINS`.
