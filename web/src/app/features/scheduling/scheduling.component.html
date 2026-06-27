@@ -20,12 +20,18 @@
           <input matInput [matDatepicker]="picker" formControlName="date" />
           <mat-datepicker-toggle matIconSuffix [for]="picker" />
           <mat-datepicker #picker />
+          @if (form.controls.date.hasError('required') && form.controls.date.touched) {
+            <mat-error>Date is required.</mat-error>
+          }
         </mat-form-field>
 
         <mat-form-field class="scheduling__field scheduling__field--time" appearance="outline">
           <mat-label>Time</mat-label>
           <input matInput type="time" formControlName="time" />
           <mat-icon class="scheduling__field-icon" matIconSuffix>schedule</mat-icon>
+          @if (form.controls.time.hasError('required') && form.controls.time.touched) {
+            <mat-error>Time is required.</mat-error>
+          }
         </mat-form-field>
       </div>
 

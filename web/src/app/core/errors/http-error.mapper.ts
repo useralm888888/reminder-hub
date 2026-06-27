@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 interface ProblemDetails {
   title?: string;
   detail?: string;
+  errors?: Record<string, string[]>;
 }
 
 export function mapHttpErrorMessage(
@@ -19,6 +20,14 @@ export function mapHttpErrorMessage(
 
   if (error.status === 400) {
     const problem = error.error as ProblemDetails | null;
+    const validationMessages = problem?.errors
+      ? Object.values(problem.errors).flat().filter((message) => message.trim().length > 0)
+      : [];
+
+    if (validationMessages.length > 0) {
+      return validationMessages.join(' ');
+    }
+
     const detail = problem?.detail ?? problem?.title;
     if (typeof detail === 'string' && detail.trim().length > 0) {
       return detail;
