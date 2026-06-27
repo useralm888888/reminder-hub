@@ -8,7 +8,10 @@ public static class WebApplicationExtensions
 {
     public static async Task ApplyDatabaseMigrationsAsync(this WebApplication app)
     {
-        var applyMigrations = app.Configuration.GetValue("Database:ApplyMigrationsOnStartup", false);
+        var applyMigrations = app.Configuration.GetValue(
+            "Database:ApplyMigrationsOnStartup",
+            app.Environment.IsProduction());
+
         if (!applyMigrations)
         {
             return;
@@ -35,6 +38,7 @@ public static class WebApplicationExtensions
                     maxRetries);
 
                 await dbContext.Database.MigrateAsync();
+                await EnsureReminderVersionColumnAsync(dbContext, logger);
                 logger.LogInformation("Database migrations applied successfully.");
                 return;
             }
@@ -65,6 +69,24 @@ public static class WebApplicationExtensions
               4. dotnet run --project Api.csproj
             """,
             lastException);
+    }
+
+    private static async Task EnsureReminderVersionColumnAsync(
+        AppDbContext dbContext,
+        ILogger logger)
+    {
+        if (!dbContext.Database.IsRelational())
+        {
+            return;
+        }
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            ALTER TABLE reminders
+            ADD COLUMN IF NOT EXISTS "Version" integer NOT NULL DEFAULT 0;
+            """);
+
+        logger.LogInformation("Verified reminders.Version column exists.");
     }
 
     private static bool IsTransientConnectionError(Exception exception)
