@@ -1,5 +1,6 @@
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -30,6 +31,7 @@ interface NavItem {
 export class ShellComponent {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly breakpointObserver = inject(BreakpointObserver);
 
   protected readonly navItems: NavItem[] = [
     {
@@ -49,6 +51,8 @@ export class ShellComponent {
   ];
 
   protected readonly currentUsername = this.authService.currentUsername;
+  protected readonly isMobile = signal(false);
+  protected readonly sidebarOpen = signal(true);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -63,6 +67,31 @@ export class ShellComponent {
     const url = this.currentUrl();
     return this.navItems.find((item) => url.startsWith(item.route)) ?? this.navItems[0];
   });
+
+  constructor() {
+    this.breakpointObserver
+      .observe([Breakpoints.Handset])
+      .pipe(takeUntilDestroyed())
+      .subscribe((result) => {
+        const mobile = result.matches;
+        this.isMobile.set(mobile);
+        this.sidebarOpen.set(!mobile);
+      });
+  }
+
+  protected openSidebar(): void {
+    this.sidebarOpen.set(true);
+  }
+
+  protected closeSidebar(): void {
+    this.sidebarOpen.set(false);
+  }
+
+  protected closeSidebarOnNavigate(): void {
+    if (this.isMobile()) {
+      this.sidebarOpen.set(false);
+    }
+  }
 
   protected logout(): void {
     this.authService.logout();

@@ -1,5 +1,10 @@
 <mat-sidenav-container class="shell">
-  <mat-sidenav class="shell__sidenav" mode="side" opened>
+  <mat-sidenav
+    class="shell__sidenav"
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="sidebarOpen()"
+    (openedChange)="sidebarOpen.set($event)"
+  >
     <div class="shell__sidebar">
       <div class="shell__sidebar-top">
         <div class="shell__logo" aria-label="Reminder Hub">
@@ -18,6 +23,7 @@
             class="shell__nav-link"
             [routerLink]="item.route"
             routerLinkActive="shell__nav-link--active"
+            (click)="closeSidebarOnNavigate()"
           >
             <mat-icon
               class="shell__nav-icon"
@@ -34,11 +40,31 @@
           <mat-icon class="shell__logout-icon" fontSet="material-icons-outlined" fontIcon="logout" />
           Logout
         </button>
+
+        <button
+          class="shell__sidebar-toggle"
+          type="button"
+          aria-label="Close sidebar"
+          (click)="closeSidebar()"
+        >
+          &lt;
+        </button>
       </div>
     </div>
   </mat-sidenav>
 
   <mat-sidenav-content class="shell__content">
+    @if (!sidebarOpen()) {
+      <button
+        class="shell__sidebar-open"
+        type="button"
+        aria-label="Open sidebar"
+        (click)="openSidebar()"
+      >
+        &gt;
+      </button>
+    }
+
     <header class="shell__page-header">
       <div class="shell__page-heading">
         <h1 class="shell__page-title">{{ activePage().title }}</h1>
