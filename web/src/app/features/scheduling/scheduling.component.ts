@@ -12,7 +12,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { getErrorMessage } from '../../core/errors/http-error.context';
 import { ReminderService } from '../../core/services/reminder.service';
-import { buildScheduledAt } from '../../core/utils/schedule-datetime.util';
+import { buildScheduledAt, startOfToday } from '../../core/utils/schedule-datetime.util';
 import {
   hasFutureDateTimeError,
   scheduledInFutureValidator,
@@ -42,6 +42,7 @@ export class SchedulingComponent {
 
   protected readonly submitting = signal(false);
   protected readonly hasFutureDateTimeError = hasFutureDateTimeError;
+  protected readonly minDate = startOfToday();
 
   protected readonly form = this.fb.nonNullable.group(
     {

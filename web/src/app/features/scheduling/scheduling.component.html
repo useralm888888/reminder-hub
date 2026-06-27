@@ -20,7 +20,7 @@
       <div class="scheduling__datetime">
         <mat-form-field class="scheduling__field scheduling__field--date" appearance="outline">
           <mat-label>Date</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="date" />
+          <input matInput [matDatepicker]="picker" [min]="minDate" formControlName="date" />
           <mat-datepicker-toggle matIconSuffix [for]="picker" />
           <mat-datepicker #picker />
           @if (form.controls.date.hasError('required') && form.controls.date.touched) {

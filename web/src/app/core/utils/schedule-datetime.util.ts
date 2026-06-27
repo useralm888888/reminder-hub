@@ -5,6 +5,12 @@ export function buildScheduledAt(date: Date, time: string): Date {
   return scheduledAt;
 }
 
+export function startOfToday(): Date {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
 export function formatTimeFromDate(date: Date): string {
   const hours = date.getHours().toString().padStart(2, '0');
   const minutes = date.getMinutes().toString().padStart(2, '0');
