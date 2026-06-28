@@ -1,0 +1,36 @@
+name: Deploy to Railway
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Railway deploy
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    container: ghcr.io/railwayapp/cli:latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Deploy API
+        working-directory: api
+        run: railway up --service=${{ secrets.RAILWAY_API_SERVICE_ID }} --ci
+
+      - name: Deploy Web
+        working-directory: web
+        run: railway up --service=${{ secrets.RAILWAY_WEB_SERVICE_ID }} --ci

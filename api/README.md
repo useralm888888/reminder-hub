@@ -17,11 +17,15 @@ dotnet run
 Swagger: `/swagger`  
 Health: `/health`
 
-Docker (API + Postgres):
+**Docker — full stack** (API + Postgres + web): from repo root, see [root README](../README.md#run-with-docker).
+
+**Docker — API + Postgres only:**
 
 ```bash
 docker compose -f api/docker-compose.yml up --build
 ```
+
+API: http://localhost:8080 · Login: **admin / admin** · Schedule token: `docker-schedule-token-change-me` (set in compose env).
 
 ## Endpoints
 

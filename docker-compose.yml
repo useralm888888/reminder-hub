@@ -18,7 +18,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./api
       dockerfile: Dockerfile
     container_name: reminder-api
     ports:
@@ -37,6 +37,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        API_BASE_URL: "http://localhost:8080"
+    container_name: reminder-web
+    ports:
+      - "4200:8080"
+    depends_on:
+      - api
 
 volumes:
   postgres_data:
